@@ -1,0 +1,6 @@
+<!--
+  This view is used to render the installed plugins page.
+-->
+<div>
+  This plugin allows you to run ant tasks if your project build with SUCCESS or UNSTABLE result 
+</div>

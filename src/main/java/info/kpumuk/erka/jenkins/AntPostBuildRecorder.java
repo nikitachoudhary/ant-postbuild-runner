@@ -1,0 +1,120 @@
+package info.kpumuk.erka.jenkins;
+
+import static hudson.model.Result.SUCCESS;
+import static hudson.model.Result.UNSTABLE;
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.model.BuildListener;
+import hudson.model.Result;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Publisher;
+import hudson.tasks.Recorder;
+import hudson.tasks.Ant;
+import hudson.util.FormValidation;
+
+import java.io.IOException;
+
+import javax.servlet.ServletException;
+
+import net.sf.json.JSONObject;
+
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+
+/**
+ * 
+ * @author Roman Dmytrenko
+ */
+public class AntPostBuildRecorder extends Recorder {
+
+	private final String name;
+	private String targets;
+
+	@DataBoundConstructor
+	public AntPostBuildRecorder(String name, String targets) {
+		this.name = name;
+		this.targets = targets;
+	}
+
+	public BuildStepMonitor getRequiredMonitorService() {
+		return BuildStepMonitor.BUILD;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getAntTargets() {
+		return targets;
+	}
+
+	@Override
+	public boolean needsToRunAfterFinalized() {
+		return true;
+	}
+
+	@Override
+	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+			throws InterruptedException, IOException {
+
+		boolean result = false;
+		Result buildResult = build.getResult();
+		if (buildResult.equals(SUCCESS) || buildResult.equals(UNSTABLE)) {
+			Ant runner = new Ant(this.targets, "ant-default", "", "", "");
+			listener.getLogger().append("Running post ant task.....");
+			result = runner.perform(build, launcher, listener);
+			if (!result) {
+				build.setResult(Result.FAILURE);
+			}
+		}
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public BuildStepDescriptor getDescriptor() {
+		return (DescriptorImpl) super.getDescriptor();
+	}
+
+	@Extension
+	public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+
+		public DescriptorImpl() {
+			super(AntPostBuildRecorder.class);
+			load();
+		}
+
+		/**
+		 * Performs on-the-fly validation of the form field 'name'.
+		 * 
+		 * @param value
+		 *            This parameter receives the value that the user has typed.
+		 * @return Indicates the outcome of the validation. This is sent to the
+		 *         browser.
+		 */
+		public FormValidation doCheckName(@QueryParameter String antTargets) throws IOException, ServletException {
+			if (antTargets.length() == 0)
+				return FormValidation.error("Please set ant targets");
+			return FormValidation.ok();
+		}
+
+		public boolean isApplicable(Class<? extends AbstractProject> aClass) {
+			return true;
+		}
+
+		public String getDisplayName() {
+			return "Post build ant runner";
+		}
+
+		@Override
+		public Publisher newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+			String antTargets = formData.getString("antTargets");
+			return new AntPostBuildRecorder(this.getDisplayName(), antTargets);
+		}
+	}
+
+}
