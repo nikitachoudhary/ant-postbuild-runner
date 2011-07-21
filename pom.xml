@@ -11,37 +11,49 @@
   <version>0.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
-    <name>postbuild-ant-run</name>
-    <url>http://erka.kpumuk.info</url>
-    <description>Simple Jenkins CI plugin which runs specified targets in case if your project build successfully.</description>
-    <developers>
-        <developer>
-            <name>Roman Dmytrenko</name>
-            <email>erka@kpumuk.info</email>
-        </developer>
-    </developers>
-    <scm>
-        <connection>scm:git:git://github.com/erka/ant-postbuild-runner.git</connection>
-    </scm>
+  <name>postbuild-ant-run</name>
+  <url>http://erka.kpumuk.info</url>
+  <description>Simple Jenkins CI plugin which runs specified targets in case if your project build successfully.</description>
+  <developers>
+      <developer>
+          <name>Roman Dmytrenko</name>
+          <email>erka@kpumuk.info</email>
+      </developer>
+  </developers>
+  <scm>
+      <url>scm:git:git://github.com/erka/ant-postbuild-runner.git</url>
+      <connection>scm:git:git@github.com:erka/ant-postbuild-runner.git</connection>
+      <developerConnection>scm:git:git@github.com:erka/ant-postbuild-runner.git</developerConnection>
+  </scm>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>1.8.5</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.5</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+  <dependencies>
+      <dependency>
+          <groupId>org.mockito</groupId>
+          <artifactId>mockito-core</artifactId>
+          <version>1.8.5</version>
+          <scope>test</scope>
+      </dependency>
+      <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.5</version>
+          <scope>test</scope>
+      </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.2</version>
+      </plugin>
+    </plugins>
+  </build>
 
   <!-- get every artifact through maven.glassfish.org, which proxies all the artifacts that we need -->
   <repositories>
