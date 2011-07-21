@@ -1,0 +1,3 @@
+=== ant-postbuild-runner ===
+
+Simple Jenkins CI plugin which runs specified targets in case if your project build successfully.

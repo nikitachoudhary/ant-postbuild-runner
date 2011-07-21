@@ -10,12 +10,14 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Builder;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.tasks.Ant;
 import hudson.util.FormValidation;
 
 import java.io.IOException;
+import java.io.PrintStream;
 
 import javax.servlet.ServletException;
 
@@ -25,14 +27,14 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-/**
- * 
+/** 
  * @author Roman Dmytrenko
  */
 public class AntPostBuildRecorder extends Recorder {
 
 	private final String name;
 	private String targets;
+	protected Builder testRunner;
 
 	@DataBoundConstructor
 	public AntPostBuildRecorder(String name, String targets) {
@@ -60,18 +62,26 @@ public class AntPostBuildRecorder extends Recorder {
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
 			throws InterruptedException, IOException {
-
 		boolean result = false;
 		Result buildResult = build.getResult();
+
 		if (buildResult.equals(SUCCESS) || buildResult.equals(UNSTABLE)) {
-			Ant runner = new Ant(this.targets, "ant-default", "", "", "");
-			listener.getLogger().append("Running post ant task.....");
+			Builder runner = runner();
+			PrintStream logger = listener.getLogger();
+			logger.append("[ant postbuild runner] running.....\r\n");
 			result = runner.perform(build, launcher, listener);
 			if (!result) {
 				build.setResult(Result.FAILURE);
 			}
 		}
 		return result;
+	}
+
+	protected Builder runner() {
+		if (testRunner == null) {
+			return new Ant(this.targets, "ant-default", "", "", "");
+		}
+		return testRunner;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -85,7 +95,6 @@ public class AntPostBuildRecorder extends Recorder {
 
 		public DescriptorImpl() {
 			super(AntPostBuildRecorder.class);
-			load();
 		}
 
 		/**
@@ -96,9 +105,10 @@ public class AntPostBuildRecorder extends Recorder {
 		 * @return Indicates the outcome of the validation. This is sent to the
 		 *         browser.
 		 */
-		public FormValidation doCheckName(@QueryParameter String antTargets) throws IOException, ServletException {
-			if (antTargets.length() == 0)
+		public FormValidation doCheckAntTargets(@QueryParameter String antTargets) throws IOException, ServletException {
+			if (antTargets == null || antTargets.length() == 0) {
 				return FormValidation.error("Please set ant targets");
+			}
 			return FormValidation.ok();
 		}
 
@@ -107,7 +117,7 @@ public class AntPostBuildRecorder extends Recorder {
 		}
 
 		public String getDisplayName() {
-			return "Post build ant runner";
+			return "ant postbuild runner";
 		}
 
 		@Override
